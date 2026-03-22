@@ -20,7 +20,7 @@
   --donut-size: min(260px, 30vh);
   --donut-center-y: 50vh;
   --stage-pad-x: clamp(16px, 2.6vw, 32px);
-  --content-max: 1150px;
+  --content-max: 100%;
 }
 
 * {
@@ -40,7 +40,7 @@ body {
   height: 100vh;
   display: grid;
   grid-template-columns: minmax(280px, 360px) 1fr;
-  width: min(1680px, 100%);
+  width: 100%;
   margin-inline: auto;
   position: relative;
 }
@@ -204,7 +204,7 @@ body {
 }
 
 .country-chart-wrap {
-  width: min(100%, 1150px);
+  width: 100%;
   margin: var(--panel-pad-y) auto 0;
   min-height: calc(100vh - var(--panel-pad-y) * 2);
   display: grid;
@@ -212,7 +212,7 @@ body {
 }
 
 .country-chart {
-  width: min(100%, 100vh);
+  width: 100%;
   height: auto;
   max-height: 100%;
   pointer-events: auto;
