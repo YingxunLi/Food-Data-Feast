@@ -204,7 +204,10 @@ body {
 }
 
 .country-chart-wrap {
-  width: 100%;
+  width: min(
+    100%,
+    calc(100vw - clamp(280px, 28vw, 360px) - (var(--stage-pad-x) * 2))
+  );
   margin: var(--panel-pad-y) auto 0;
   min-height: calc(100vh - var(--panel-pad-y) * 2);
   display: grid;
@@ -212,7 +215,7 @@ body {
 }
 
 .country-chart {
-  width: 100%;
+  width: min(100%, calc(100vh - (var(--panel-pad-y) * 2)));
   height: auto;
   max-height: 100%;
   pointer-events: auto;
@@ -566,6 +569,14 @@ body {
 
   .top-nav {
     justify-content: start;
+  }
+
+  .country-chart-wrap {
+    width: 100%;
+  }
+
+  .country-chart {
+    width: min(100%, 100vw);
   }
 }
 
