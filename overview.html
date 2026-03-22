@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>European Dietary Patterns - Overview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./overview.css?v=20260322e" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <main class="layout">
+      <div id="countryUnderlay" class="country-underlay" aria-hidden="true"></div>
+
+      <aside class="panel">
+        <h1 class="title">European Dietary Patterns</h1>
+
+        <div class="country-select-wrap">
+          <label class="sr-only" for="countrySelectButton">Country</label>
+          <div id="countrySelectRoot" class="country-select-root">
+            <button
+              id="countrySelectButton"
+              class="country-select-trigger"
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded="false"
+            ></button>
+            <ul id="countrySelectList" class="country-select-list" role="listbox"></ul>
+          </div>
+          <select id="countrySelect" class="country-select-native sr-only" tabindex="-1" aria-hidden="true"></select>
+        </div>
+
+        <p id="summaryText" class="summary"></p>
+
+        <div class="chart-wrap">
+          <div id="donutChart" class="donut-chart" aria-label="Distribution donut"></div>
+          <ul id="donutLegend" class="donut-legend"></ul>
+        </div>
+
+        <section id="countryModeContent" class="country-mode-content" aria-hidden="true">
+          <div class="country-chart-wrap">
+            <svg id="countryChart" class="country-chart" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+        </section>
+
+        <button id="exploreButton" class="explore-btn" type="button">
+          <span id="exploreLabel">Explore</span>
+          <span class="arrow">&#8594;</span>
+        </button>
+      </aside>
+
+      <section class="stage">
+        <header class="top-nav">
+          <a id="overviewNavLink" class="top-nav-link active" href="./overview.html">Overview</a>
+          <a id="countryNavLink" class="top-nav-link" href="./country.html">Country</a>
+        </header>
+
+        <section id="map" class="map-wrap">
+          <div class="map-color-legend" aria-label="Map color legend">
+            <div class="map-legend-item">
+              <span class="map-legend-dot" style="background: #AE4261;"></span>
+              <span>No</span>
+            </div>
+            <div class="map-legend-item">
+              <span class="map-legend-dot" style="background: #F3CA00;"></span>
+              <span>Low</span>
+            </div>
+            <div class="map-legend-item">
+              <span class="map-legend-dot" style="background: #243285;"></span>
+              <span>Medium</span>
+            </div>
+            <div class="map-legend-item">
+              <span class="map-legend-dot" style="background: #00A36F;"></span>
+              <span>High</span>
+            </div>
+          </div>
+          <p class="loading">Loading map...</p>
+        </section>
+
+        <footer class="food-picker-wrap">
+          <div id="foodPicker" class="food-picker"></div>
+        </footer>
+      </section>
+    </main>
+
+    <div id="tooltip" class="tooltip"></div>
+
+    <script type="module" src="./overview.js?v=20260322e"></script>
+  </body>
+</html>
