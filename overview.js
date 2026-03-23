@@ -2,9 +2,9 @@ import cases from "./InfoGraphic_country_table.js";
 
 const LEVELS = ["No", "Low", "Medium", "High"];
 const LEVEL_COLORS = {
-  No: "#F2CF00",
+  No: "#B91928",
   Low: "#F39600",
-  Medium: "#B91928",
+  Medium: "#F2CF00",
   High: "#689C65",
 };
 const LEVEL_ORDER = ["No", "Low", "Medium", "High"];
@@ -14,30 +14,6 @@ const COUNTRY_QUADRANTS = COUNTRY_LEVEL_ORDER.map((level) => ({
   level,
   color: LEVEL_COLORS[level],
 }));
-
-const FOOD_GUIDELINE_GROUP = {
-  "Whole grains": "encourage",
-  Vegetables: "encourage",
-  Fruits: "encourage",
-  "Fish and shellfish": "encourage",
-  Legumes: "encourage",
-  Nuts: "encourage",
-  "All plant oils and plant margarines": "encourage",
-  "Tubers or Starches": "balance",
-  "Dairy Food": "balance",
-  "Beef, lamb, goat, pork, and red meat in its processed form": "balance",
-  "Chicken and other poultry": "balance",
-  Eggs: "balance",
-  "Animal fats and other saturated fats": "limit",
-  "Added sugars": "limit",
-};
-
-const COUNTRY_BG_PERFORMANCE_COLORS = ["#00A36F", "#243285", "#F3CA00", "#AE4261"];
-const LEVEL_RANK_BY_GUIDELINE = {
-  encourage: { High: 0, Medium: 1, Low: 2, No: 3 },
-  balance: { Medium: 0, Low: 1, No: 2, High: 3 },
-  limit: { No: 0, Low: 1, Medium: 2, High: 3 },
-};
 
 const COUNTRY_META = {
   AT: { name: "Austria" },
@@ -90,8 +66,6 @@ const state = {
   selectedCountry: initialCountry,
   selectedFood: initialFood,
   viewMode: initialViewMode,
-  countrySortMode: "frequency",
-  countrySectorLayout: new Map(),
   svg: null,
 };
 
@@ -119,9 +93,6 @@ const panelEl = document.querySelector(".panel");
 const countryUnderlayEl = document.querySelector("#countryUnderlay");
 const countryModeContentEl = document.querySelector("#countryModeContent");
 const countryChartEl = document.querySelector("#countryChart");
-const countrySortToggleEl = document.querySelector("#countrySortToggle");
-const sortModeFrequencyEl = document.querySelector("#sortModeFrequency");
-const sortModeRecommendationEl = document.querySelector("#sortModeRecommendation");
 
 init();
 
@@ -132,7 +103,6 @@ function init() {
   loadSvgAndRenderMap();
   syncCountryUnderlayWidth();
   applyViewModeState();
-  syncCountrySortToggle();
 
   exploreButtonEl.addEventListener("click", () => {
     if (state.viewMode === "country") {
@@ -171,15 +141,6 @@ function init() {
   countrySelectEl.addEventListener("change", () => {
     setSelectedCountry(countrySelectEl.value);
   });
-
-  if (sortModeFrequencyEl && sortModeRecommendationEl) {
-    sortModeFrequencyEl.addEventListener("click", () => {
-      setCountrySortMode("frequency");
-    });
-    sortModeRecommendationEl.addEventListener("click", () => {
-      setCountrySortMode("recommendation");
-    });
-  }
 
   window.addEventListener("resize", debounce(() => {
     syncCountryUnderlayWidth();
@@ -235,9 +196,6 @@ function closeCountryDropdown() {
 }
 
 function setSelectedCountry(code) {
-  if (state.selectedCountry !== code) {
-    state.countrySectorLayout = new Map();
-  }
   state.selectedCountry = code;
   countrySelectEl.value = code;
   countrySelectButtonEl.textContent = displayCountry(code);
@@ -495,7 +453,6 @@ function setViewMode(mode) {
 
   state.viewMode = mode;
   applyViewModeState();
-  syncCountrySortToggle();
   updateExploreCta();
   renderMap();
 
@@ -509,34 +466,6 @@ function setViewMode(mode) {
 
   syncNavigationState();
   syncOverviewQuery();
-}
-
-function setCountrySortMode(mode) {
-  if (mode !== "frequency" && mode !== "recommendation") {
-    return;
-  }
-  if (state.countrySortMode === mode) {
-    return;
-  }
-
-  state.countrySortMode = mode;
-  syncCountrySortToggle();
-  if (state.viewMode === "country") {
-    renderCountryMode();
-  }
-}
-
-function syncCountrySortToggle() {
-  if (!countrySortToggleEl || !sortModeFrequencyEl || !sortModeRecommendationEl) {
-    return;
-  }
-
-  const isCountryMode = state.viewMode === "country";
-  countrySortToggleEl.setAttribute("aria-hidden", isCountryMode ? "false" : "true");
-
-  const isFrequency = state.countrySortMode === "frequency";
-  sortModeFrequencyEl.classList.toggle("is-active", isFrequency);
-  sortModeRecommendationEl.classList.toggle("is-active", !isFrequency);
 }
 
 function applyViewModeState() {
@@ -636,7 +565,6 @@ function drawCountryChart(countryEntry, countryFoods) {
   const height = 1000;
   const centerX = width / 2;
   const centerY = height / 2;
-  const transition = d3.transition().duration(420).ease(d3.easeCubicInOut);
 
   const svg = d3.select(countryChartEl);
   svg.selectAll("*").remove();
@@ -644,7 +572,7 @@ function drawCountryChart(countryEntry, countryFoods) {
   const mainGroup = svg.append("g").attr("transform", `translate(${centerX},${centerY})`);
 
   const outerRadius = 360;
-  const innerRadius = 58;
+  const innerRadius = 50;
   const sectorGap = 0.02;
   const lineGap = 0.2;
 
@@ -671,11 +599,9 @@ function drawCountryChart(countryEntry, countryFoods) {
     .attr("class", "country-value-labels")
     .attr("pointer-events", "none");
 
-  const nextLayout = new Map();
-
   const setCenterFoodLabel = (food) => {
     const raw = (food || "").trim();
-    const maxCharsPerLine = Math.max(8, Math.floor((innerRadius * 1.62) / 7));
+    const maxCharsPerLine = Math.max(8, Math.floor((innerRadius * 1.7) / 7));
     const words = raw.split(/\s+/).filter(Boolean);
     const lines = [];
     let currentLine = "";
@@ -713,39 +639,15 @@ function drawCountryChart(countryEntry, countryFoods) {
       return;
     }
 
-    const guidelineGroup = FOOD_GUIDELINE_GROUP[raw] || "balance";
-    const guidelineTextByGroup = {
-      encourage: "To Encourage",
-      balance: "To Balance",
-      limit: "To Limit",
-    };
-    const guidelineText = guidelineTextByGroup[guidelineGroup] || "To Balance";
-
-    const lineHeight = 14;
-    const guidelineGap = 6;
-    const guidelineFontSize = 10;
-    const totalTextHeight = finalLines.length * lineHeight + guidelineGap + guidelineFontSize;
-    const startDy = -(totalTextHeight / 2) + lineHeight / 2;
-
+    const lineHeight = 16;
+    const startDy = finalLines.length === 1 ? 0 : -lineHeight / 2;
     finalLines.forEach((line, index) => {
-      const tspan = centerFoodLabel
+      centerFoodLabel
         .append("tspan")
         .attr("x", 0)
         .attr("dy", index === 0 ? startDy : lineHeight)
         .text(line);
-      if (index === 0) {
-        tspan.attr("font-weight", 600);
-      }
     });
-
-    centerFoodLabel
-      .append("tspan")
-      .attr("x", 0)
-      .attr("dy", guidelineGap + guidelineFontSize)
-      .attr("font-size", `${guidelineFontSize}px`)
-      .attr("font-weight", 500)
-      .attr("fill", "#6f6a63")
-      .text(guidelineText);
   };
 
   const setFoodHoverState = (food) => {
@@ -803,105 +705,53 @@ function drawCountryChart(countryEntry, countryFoods) {
     hoverValueLabelsGroup.raise();
   };
 
-  const allEntries = [];
-  for (const level of COUNTRY_LEVEL_ORDER) {
-    for (const food of countryFoods) {
-      const hit = countryEntry.items.find((datum) => datum.food.trim() === food && datum.level === level);
-      const value = hit ? hit.value : 0;
-      allEntries.push({
-        food,
-        level,
-        value,
-        rank: getCountryPerformanceRank(food, level),
-        baseIndex: allEntries.length,
-      });
-    }
-  }
-
-  const sectors = state.countrySortMode === "recommendation"
-    ? [0, 1, 2, 3].map((rank) => ({
-      id: `recommendation-${rank}`,
-      entries: allEntries
-        .filter((entry) => entry.rank === rank)
-        .sort((a, b) => a.baseIndex - b.baseIndex),
-    }))
-    : COUNTRY_LEVEL_ORDER.map((level) => ({
-      id: `frequency-${level}`,
-      entries: allEntries
-        .filter((entry) => entry.level === level)
-        .sort((a, b) => a.baseIndex - b.baseIndex),
-    }));
-
-  sectors.forEach((sector, index) => {
+  COUNTRY_QUADRANTS.forEach(({ level, color }, index) => {
     const sectorStart = -Math.PI / 2 + (index * Math.PI) / 2 + sectorGap;
     const sectorEnd = -Math.PI / 2 + ((index + 1) * Math.PI) / 2 - sectorGap;
+    const sectorArc = d3
+      .arc()
+      .innerRadius(innerRadius)
+      .outerRadius(outerRadius)
+      .startAngle(sectorStart)
+      .endAngle(sectorEnd);
 
-    const sectorGroup = mainGroup.append("g").attr("class", "country-sector").attr("data-sector", sector.id);
+    const sectorGroup = mainGroup.append("g").attr("class", "country-sector").attr("data-level", level);
+    const tone = d3.color(color);
+    const sectorFill = tone ? `rgba(${tone.r}, ${tone.g}, ${tone.b}, 0.05)` : "rgba(0, 0, 0, 0.05)";
 
-    const lineUsableStart = sectorStart + lineGap;
-    const lineUsableEnd = sectorEnd - lineGap;
-    const lineUsableSpan = Math.max(0.001, lineUsableEnd - lineUsableStart);
-    const bgUsableStart = sectorStart;
-    const bgUsableEnd = sectorEnd;
-    const bgUsableSpan = Math.max(0.001, bgUsableEnd - bgUsableStart);
-    const entries = sector.entries;
-    const entryCount = Math.max(1, entries.length);
+    sectorGroup
+      .append("path")
+      .attr("class", "country-sector-bg")
+      .attr("d", sectorArc())
+      .style("fill", sectorFill)
+      .attr("stroke-width", 2)
+      .attr("pointer-events", "none");
 
-    entries.forEach((entry, entryIndex) => {
-      const { food, level, value } = entry;
+    const usableStart = sectorStart + lineGap;
+    const usableEnd = sectorEnd - lineGap;
+    const usableSpan = Math.max(0.001, usableEnd - usableStart);
 
-      const blockStart = bgUsableStart + (entryIndex / entryCount) * bgUsableSpan;
-      const blockEnd = bgUsableStart + ((entryIndex + 1) / entryCount) * bgUsableSpan;
-      const t = entryCount > 1 ? entryIndex / (entryCount - 1) : 0.5;
-      const angle = lineUsableStart + t * lineUsableSpan;
+    countryFoods.forEach((food, foodIndex) => {
+      const item = countryEntry.items.find((datum) => datum.food.trim() === food && datum.level === level);
+      const value = item ? item.value : 0;
 
-      const layoutKey = `${level}::${food}`;
-      const prevLayout = state.countrySectorLayout.get(layoutKey) || {
-        blockStart,
-        blockEnd,
-        angle,
-      };
-      nextLayout.set(layoutKey, { blockStart, blockEnd, angle });
-
-      const bgArc = d3
-        .arc()
-        .innerRadius(innerRadius)
-        .outerRadius(outerRadius)
-        .startAngle(prevLayout.blockStart)
-        .endAngle(prevLayout.blockEnd);
-
-      const bgArcTarget = d3
-        .arc()
-        .innerRadius(innerRadius)
-        .outerRadius(outerRadius)
-        .startAngle(blockStart)
-        .endAngle(blockEnd);
-
-      const bgPath = sectorGroup
-        .append("path")
-        .attr("class", "country-sector-bg")
-        .attr("d", bgArc())
-        .style("fill", getCountrySectorFill(food, level))
-        .attr("pointer-events", "none");
-
-      bgPath.transition(transition).attr("d", bgArcTarget());
+      const t = countryFoods.length > 1 ? foodIndex / (countryFoods.length - 1) : 0.5;
+      const angle = usableStart + t * usableSpan;
 
       const safeRatio = dataMax === dataMin ? 1 : (value - dataMin) / (dataMax - dataMin);
       const lineLength = Math.max(0, safeRatio) * (maxLineLength - minLineLength) + minLineLength;
 
-      const [x1Prev, y1Prev] = d3.pointRadial(prevLayout.angle, innerRadius);
-      const [x2Prev, y2Prev] = d3.pointRadial(prevLayout.angle, innerRadius + lineLength);
       const [x1, y1] = d3.pointRadial(angle, innerRadius);
       const [x2, y2] = d3.pointRadial(angle, innerRadius + lineLength);
 
       const lineGroup = sectorGroup.append("g").attr("class", "food-line-group").attr("data-food", food);
 
-      const hitLine = lineGroup
+      lineGroup
         .append("line")
-        .attr("x1", x1Prev)
-        .attr("y1", y1Prev)
-        .attr("x2", x2Prev)
-        .attr("y2", y2Prev)
+        .attr("x1", x1)
+        .attr("y1", y1)
+        .attr("x2", x2)
+        .attr("y2", y2)
         .attr("stroke", "transparent")
         .attr("stroke-width", 14)
         .attr("pointer-events", "stroke")
@@ -922,38 +772,22 @@ function drawCountryChart(countryEntry, countryFoods) {
           setFoodHoverState(null);
         });
 
-      hitLine
-        .transition(transition)
-        .attr("x1", x1)
-        .attr("y1", y1)
-        .attr("x2", x2)
-        .attr("y2", y2);
-
-      const valueLine = lineGroup
+      lineGroup
         .append("line")
         .attr("class", "food-line")
         .attr("data-food", food)
-        .attr("x1", x1Prev)
-        .attr("y1", y1Prev)
-        .attr("x2", x2Prev)
-        .attr("y2", y2Prev)
-        .attr("data-value", value)
-        .attr("stroke-width", 4)
-        .style("stroke", LEVEL_COLORS[level])
-        .attr("stroke-linecap", "round")
-        .attr("opacity", 0.72)
-        .attr("pointer-events", "none");
-
-      valueLine
-        .transition(transition)
         .attr("x1", x1)
         .attr("y1", y1)
         .attr("x2", x2)
-        .attr("y2", y2);
+        .attr("y2", y2)
+        .attr("data-value", value)
+        .attr("stroke-width", 4)
+        .style("stroke", color)
+        .attr("stroke-linecap", "round")
+        .attr("opacity", 0.72)
+        .attr("pointer-events", "none");
     });
   });
-
-  state.countrySectorLayout = nextLayout;
 
   centerCircle.lower();
   centerFoodLabel.raise();
@@ -1123,17 +957,6 @@ function hexToRgb(hex) {
     g: (int >> 8) & 255,
     b: int & 255,
   };
-}
-
-function getCountrySectorFill(food, level) {
-  const levelRank = getCountryPerformanceRank(food, level);
-  const color = COUNTRY_BG_PERFORMANCE_COLORS[levelRank] || COUNTRY_BG_PERFORMANCE_COLORS[3];
-  return hexToRgba(color, 0.08);
-}
-
-function getCountryPerformanceRank(food, level) {
-  const guideline = FOOD_GUIDELINE_GROUP[(food || "").trim()] || "balance";
-  return LEVEL_RANK_BY_GUIDELINE[guideline]?.[level] ?? 3;
 }
 
 function getFoods(countryList) {
