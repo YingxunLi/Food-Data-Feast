@@ -15,6 +15,30 @@ const COUNTRY_QUADRANTS = COUNTRY_LEVEL_ORDER.map((level) => ({
   color: LEVEL_COLORS[level],
 }));
 
+const FOOD_GUIDELINE_GROUP = {
+  "Whole grains": "encourage",
+  Vegetables: "encourage",
+  Fruits: "encourage",
+  "Fish and shellfish": "encourage",
+  Legumes: "encourage",
+  Nuts: "encourage",
+  "All plant oils and plant margarines": "encourage",
+  "Tubers or Starches": "balance",
+  "Dairy Food": "balance",
+  "Beef, lamb, goat, pork, and red meat in its processed form": "balance",
+  "Chicken and other poultry": "balance",
+  Eggs: "balance",
+  "Animal fats and other saturated fats": "limit",
+  "Added sugars": "limit",
+};
+
+const COUNTRY_BG_PERFORMANCE_COLORS = ["#00A36F", "#243285", "#F3CA00", "#AE4261"];
+const LEVEL_RANK_BY_GUIDELINE = {
+  encourage: { High: 0, Medium: 1, Low: 2, No: 3 },
+  balance: { Medium: 0, Low: 1, No: 2, High: 3 },
+  limit: { No: 0, Low: 1, Medium: 2, High: 3 },
+};
+
 const COUNTRY_META = {
   AT: { name: "Austria" },
   BE: { name: "Belgium" },
@@ -572,7 +596,7 @@ function drawCountryChart(countryEntry, countryFoods) {
   const mainGroup = svg.append("g").attr("transform", `translate(${centerX},${centerY})`);
 
   const outerRadius = 360;
-  const innerRadius = 50;
+  const innerRadius = 58;
   const sectorGap = 0.02;
   const lineGap = 0.2;
 
@@ -601,7 +625,7 @@ function drawCountryChart(countryEntry, countryFoods) {
 
   const setCenterFoodLabel = (food) => {
     const raw = (food || "").trim();
-    const maxCharsPerLine = Math.max(8, Math.floor((innerRadius * 1.7) / 7));
+    const maxCharsPerLine = Math.max(8, Math.floor((innerRadius * 1.62) / 7));
     const words = raw.split(/\s+/).filter(Boolean);
     const lines = [];
     let currentLine = "";
@@ -639,15 +663,39 @@ function drawCountryChart(countryEntry, countryFoods) {
       return;
     }
 
-    const lineHeight = 16;
-    const startDy = finalLines.length === 1 ? 0 : -lineHeight / 2;
+    const guidelineGroup = FOOD_GUIDELINE_GROUP[raw] || "balance";
+    const guidelineTextByGroup = {
+      encourage: "To Encourage",
+      balance: "To Balance",
+      limit: "To Limit",
+    };
+    const guidelineText = guidelineTextByGroup[guidelineGroup] || "To Balance";
+
+    const lineHeight = 14;
+    const guidelineGap = 6;
+    const guidelineFontSize = 10;
+    const totalTextHeight = finalLines.length * lineHeight + guidelineGap + guidelineFontSize;
+    const startDy = -(totalTextHeight / 2) + lineHeight / 2;
+
     finalLines.forEach((line, index) => {
-      centerFoodLabel
+      const tspan = centerFoodLabel
         .append("tspan")
         .attr("x", 0)
         .attr("dy", index === 0 ? startDy : lineHeight)
         .text(line);
+      if (index === 0) {
+        tspan.attr("font-weight", 600);
+      }
     });
+
+    centerFoodLabel
+      .append("tspan")
+      .attr("x", 0)
+      .attr("dy", guidelineGap + guidelineFontSize)
+      .attr("font-size", `${guidelineFontSize}px`)
+      .attr("font-weight", 500)
+      .attr("fill", "#6f6a63")
+      .text(guidelineText);
   };
 
   const setFoodHoverState = (food) => {
@@ -708,35 +756,39 @@ function drawCountryChart(countryEntry, countryFoods) {
   COUNTRY_QUADRANTS.forEach(({ level, color }, index) => {
     const sectorStart = -Math.PI / 2 + (index * Math.PI) / 2 + sectorGap;
     const sectorEnd = -Math.PI / 2 + ((index + 1) * Math.PI) / 2 - sectorGap;
-    const sectorArc = d3
-      .arc()
-      .innerRadius(innerRadius)
-      .outerRadius(outerRadius)
-      .startAngle(sectorStart)
-      .endAngle(sectorEnd);
 
     const sectorGroup = mainGroup.append("g").attr("class", "country-sector").attr("data-level", level);
-    const tone = d3.color(color);
-    const sectorFill = tone ? `rgba(${tone.r}, ${tone.g}, ${tone.b}, 0.05)` : "rgba(0, 0, 0, 0.05)";
 
-    sectorGroup
-      .append("path")
-      .attr("class", "country-sector-bg")
-      .attr("d", sectorArc())
-      .style("fill", sectorFill)
-      .attr("stroke-width", 2)
-      .attr("pointer-events", "none");
-
-    const usableStart = sectorStart + lineGap;
-    const usableEnd = sectorEnd - lineGap;
-    const usableSpan = Math.max(0.001, usableEnd - usableStart);
+    const lineUsableStart = sectorStart + lineGap;
+    const lineUsableEnd = sectorEnd - lineGap;
+    const lineUsableSpan = Math.max(0.001, lineUsableEnd - lineUsableStart);
+    const bgUsableStart = sectorStart;
+    const bgUsableEnd = sectorEnd;
+    const bgUsableSpan = Math.max(0.001, bgUsableEnd - bgUsableStart);
+    const foodCount = Math.max(1, countryFoods.length);
 
     countryFoods.forEach((food, foodIndex) => {
       const item = countryEntry.items.find((datum) => datum.food.trim() === food && datum.level === level);
       const value = item ? item.value : 0;
 
-      const t = countryFoods.length > 1 ? foodIndex / (countryFoods.length - 1) : 0.5;
-      const angle = usableStart + t * usableSpan;
+      const blockStart = bgUsableStart + (foodIndex / foodCount) * bgUsableSpan;
+      const blockEnd = bgUsableStart + ((foodIndex + 1) / foodCount) * bgUsableSpan;
+      const t = foodCount > 1 ? foodIndex / (foodCount - 1) : 0.5;
+      const angle = lineUsableStart + t * lineUsableSpan;
+
+      const bgArc = d3
+        .arc()
+        .innerRadius(innerRadius)
+        .outerRadius(outerRadius)
+        .startAngle(blockStart)
+        .endAngle(blockEnd);
+
+      sectorGroup
+        .append("path")
+        .attr("class", "country-sector-bg")
+        .attr("d", bgArc())
+        .style("fill", getCountrySectorFill(food, level))
+        .attr("pointer-events", "none");
 
       const safeRatio = dataMax === dataMin ? 1 : (value - dataMin) / (dataMax - dataMin);
       const lineLength = Math.max(0, safeRatio) * (maxLineLength - minLineLength) + minLineLength;
@@ -957,6 +1009,13 @@ function hexToRgb(hex) {
     g: (int >> 8) & 255,
     b: int & 255,
   };
+}
+
+function getCountrySectorFill(food, level) {
+  const guideline = FOOD_GUIDELINE_GROUP[(food || "").trim()] || "balance";
+  const levelRank = LEVEL_RANK_BY_GUIDELINE[guideline]?.[level] ?? 3;
+  const color = COUNTRY_BG_PERFORMANCE_COLORS[levelRank] || COUNTRY_BG_PERFORMANCE_COLORS[3];
+  return hexToRgba(color, 0.08);
 }
 
 function getFoods(countryList) {
