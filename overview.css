@@ -850,6 +850,10 @@ body {
     justify-content: flex-start;
     gap: 4px;
   }
+
+  #guideNavLink {
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {

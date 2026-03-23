@@ -176,9 +176,17 @@ const topNavEl = document.querySelector("#topNav");
 const desktopTopNavSlotEl = document.querySelector("#desktopTopNavSlot");
 const mobileTopNavSlotEl = document.querySelector("#mobileTopNavSlot");
 
+function isMobileViewport() {
+  return window.matchMedia("(max-width: 860px)").matches;
+}
+
 init();
 
 function init() {
+  if (state.viewMode === "guide" && isMobileViewport()) {
+    state.viewMode = "overview";
+  }
+
   renderCountrySelect();
   renderFoodPicker();
   renderScoringGuide();
@@ -232,6 +240,9 @@ function init() {
   });
 
   window.addEventListener("resize", debounce(() => {
+    if (state.viewMode === "guide" && isMobileViewport()) {
+      setViewMode("overview");
+    }
     syncCountryUnderlayWidth();
     syncTopNavPlacement();
   }, 120));
@@ -615,6 +626,10 @@ function updateExploreCta() {
 }
 
 function setViewMode(mode) {
+  if (mode === "guide" && isMobileViewport()) {
+    mode = "overview";
+  }
+
   if (mode !== "overview" && mode !== "country" && mode !== "guide") {
     return;
   }
