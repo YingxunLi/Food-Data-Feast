@@ -189,8 +189,9 @@ body {
 .summary {
   margin: var(--space-selector-to-summary) 0 0;
   color: #555049;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.5;
+  white-space: pre-line;
 }
 
 .chart-wrap {
@@ -271,16 +272,26 @@ body {
   text-anchor: middle;
   dominant-baseline: middle;
   fill: #4b4741;
-  font-size: 12px;
+  font-size: 18px;
   line-height: 1.3;
   font-weight: 500;
+  pointer-events: none;
+}
+
+.country-center-guideline-label {
+  text-anchor: middle;
+  dominant-baseline: middle;
+  fill: #6a635a;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   pointer-events: none;
 }
 
 .country-line-value-label {
   dominant-baseline: middle;
   fill: #4b4741;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.01em;
   paint-order: stroke;

@@ -78,6 +78,23 @@ const FOOD_DISPLAY_NAMES = {
   "Tubers or Starches": "Tubers",
 };
 
+const FOOD_RECOMMENDED_RANGE = {
+  "Whole grains": "232 g/day",
+  Vegetables: "300 g/day",
+  Fruits: "200 g/day",
+  "Fish and shellfish": "28 g/day",
+  Legumes: "75 g/day",
+  Nuts: "50 g/day",
+  "All plant oils and plant margarines": "40 g/day",
+  "Tubers or Starches": "50 g/day",
+  "Dairy Food": "250 g/day",
+  "Beef, lamb, goat, pork, and red meat in its processed form": "14 g/day",
+  "Chicken and other poultry": "29 g/day",
+  Eggs: "13 g/day",
+  "Animal fats and other saturated fats": "11-12 g/day",
+  "Added sugars": "31 g/day",
+};
+
 const countries = cases.filter((c) => c.country !== "Total");
 const foods = getFoods(countries);
 const urlParams = new URLSearchParams(window.location.search);
@@ -453,7 +470,7 @@ function renderLeftPanel() {
   const values = getFoodLevelValues(entry, state.selectedFood);
   const dominant = findDominant(values);
 
-  summaryTextEl.textContent = `${dominant.value.toFixed(1)}% of people consume ${displayFoodName(state.selectedFood).toLowerCase()} at a frequency that meets the \"${dominant.level.toLowerCase()}\" standard.`;
+  summaryTextEl.textContent = buildSummarySentence(state.selectedFood, dominant);
 
   donutChartEl.style.background = `conic-gradient(${buildDonutGradient(values)})`;
   donutChartEl.innerHTML = `<div class="donut-center">${displayFoodName(state.selectedFood)}</div>`;
@@ -650,7 +667,7 @@ function drawCountryChart(countryEntry, countryFoods) {
   const mainGroup = svg.append("g").attr("transform", `translate(${centerX},${centerY})`);
 
   const outerRadius = 360;
-  const innerRadius = 50;
+  const innerRadius = 58;
   const sectorGap = 0.02;
   const lineGap = 0.2;
 
@@ -672,13 +689,27 @@ function drawCountryChart(countryEntry, countryFoods) {
     .attr("x", 0)
     .attr("y", 0);
 
+  const centerGuidelineLabel = mainGroup
+    .append("text")
+    .attr("class", "country-center-guideline-label")
+    .attr("x", 0)
+    .attr("y", 20);
+
   const hoverValueLabelsGroup = mainGroup
     .append("g")
     .attr("class", "country-value-labels")
     .attr("pointer-events", "none");
 
   const setCenterFoodLabel = (food) => {
+    if (!food) {
+      centerFoodLabel.selectAll("tspan").remove();
+      centerGuidelineLabel.text("");
+      return;
+    }
+
     const raw = displayFoodName(food || "").trim();
+    const guidelineGroup = FOOD_GUIDELINE_GROUP[food] || "balance";
+    const guidelineText = FOOD_GUIDELINE_LABEL[guidelineGroup] || "";
     const maxCharsPerLine = Math.max(8, Math.floor((innerRadius * 1.7) / 7));
     const words = raw.split(/\s+/).filter(Boolean);
     const lines = [];
@@ -714,11 +745,12 @@ function drawCountryChart(countryEntry, countryFoods) {
 
     centerFoodLabel.selectAll("tspan").remove();
     if (!finalLines.length) {
+      centerGuidelineLabel.text(guidelineText);
       return;
     }
 
     const lineHeight = 16;
-    const startDy = finalLines.length === 1 ? 0 : -lineHeight / 2;
+    const startDy = finalLines.length === 1 ? -8 : -lineHeight / 2 - 8;
     finalLines.forEach((line, index) => {
       centerFoodLabel
         .append("tspan")
@@ -726,6 +758,8 @@ function drawCountryChart(countryEntry, countryFoods) {
         .attr("dy", index === 0 ? startDy : lineHeight)
         .text(line);
     });
+
+    centerGuidelineLabel.text(guidelineText);
   };
 
   const setFoodHoverState = (food) => {
@@ -893,7 +927,17 @@ function updateCountrySummary(countryEntry, food) {
     { level: COUNTRY_LEVEL_ORDER[0], value: valuesByLevel[COUNTRY_LEVEL_ORDER[0]] || 0 },
   );
 
-  summaryTextEl.textContent = `${dominant.value.toFixed(1)}% of people consume ${displayFoodName(food).toLowerCase()} at a frequency that meets the \"${dominant.level.toLowerCase()}\" standard.`;
+  summaryTextEl.textContent = buildSummarySentence(food, dominant);
+}
+
+function buildSummarySentence(food, dominant) {
+  const levelText = String(dominant?.level || "").toLowerCase();
+  const foodText = displayFoodName(food).toLowerCase();
+  const share = Number(dominant?.value || 0).toFixed(1);
+  const guidelineGroup = FOOD_GUIDELINE_GROUP[food] || "balance";
+  const guidelineText = (FOOD_GUIDELINE_LABEL[guidelineGroup] || "To balance").toLowerCase();
+  const recommendedRange = FOOD_RECOMMENDED_RANGE[food] || "N/A";
+  return `The largest share ${share}% falls into the "${levelText}" category for ${foodText}, indicating ${levelText} adherence to the recommendations.\n\nRecommended range (${guidelineText}): ${recommendedRange}.`;
 }
 
 function syncFoodPickerSelection() {
