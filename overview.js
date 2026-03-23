@@ -2,10 +2,10 @@ import cases from "./InfoGraphic_country_table.js";
 
 const LEVELS = ["No", "Low", "Medium", "High"];
 const LEVEL_COLORS = {
-  No: "#AE4261",
-  Low: "#F3CA00",
-  Medium: "#243285",
-  High: "#00A36F",
+  No: "#F2CF00",
+  Low: "#F39600",
+  Medium: "#B91928",
+  High: "#689C65",
 };
 const LEVEL_ORDER = ["No", "Low", "Medium", "High"];
 // Country fireworks quadrants use a fixed visual order.

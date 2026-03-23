@@ -6,10 +6,10 @@
   --muted: #6f6a63;
   --accent: #7b0e47;
   --empty-country: #f9f8f5;
-  --no: #ae4261;
-  --low: #f3ca00;
-  --medium: #243285;
-  --high: #00a36f;
+  --no: #F2CF00;
+  --low: #F39600;
+  --medium: #B91928;
+  --high: #689C65;
   --panel-pad-y: clamp(22px, 3vw, 30px);
   --panel-pad-x: clamp(18px, 3vw, 34px);
   --panel-top-offset: clamp(22px, 3vw, 30px);
