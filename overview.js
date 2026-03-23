@@ -93,6 +93,9 @@ const panelEl = document.querySelector(".panel");
 const countryUnderlayEl = document.querySelector("#countryUnderlay");
 const countryModeContentEl = document.querySelector("#countryModeContent");
 const countryChartEl = document.querySelector("#countryChart");
+const topNavEl = document.querySelector("#topNav");
+const desktopTopNavSlotEl = document.querySelector("#desktopTopNavSlot");
+const mobileTopNavSlotEl = document.querySelector("#mobileTopNavSlot");
 
 init();
 
@@ -102,6 +105,7 @@ function init() {
   renderLeftPanel();
   loadSvgAndRenderMap();
   syncCountryUnderlayWidth();
+  syncTopNavPlacement();
   applyViewModeState();
 
   exploreButtonEl.addEventListener("click", () => {
@@ -144,7 +148,22 @@ function init() {
 
   window.addEventListener("resize", debounce(() => {
     syncCountryUnderlayWidth();
+    syncTopNavPlacement();
   }, 120));
+}
+
+function syncTopNavPlacement() {
+  if (!topNavEl || !desktopTopNavSlotEl || !mobileTopNavSlotEl) {
+    return;
+  }
+
+  const isMobile = window.matchMedia("(max-width: 860px)").matches;
+  const targetSlot = isMobile ? mobileTopNavSlotEl : desktopTopNavSlotEl;
+  if (topNavEl.parentElement !== targetSlot) {
+    targetSlot.appendChild(topNavEl);
+  }
+
+  mobileTopNavSlotEl.setAttribute("aria-hidden", isMobile ? "false" : "true");
 }
 
 function renderCountrySelect() {
@@ -381,9 +400,9 @@ function renderLeftPanel() {
   donutChartEl.innerHTML = `<div class="donut-center">${state.selectedFood}</div>`;
 
   donutLegendEl.innerHTML = "";
-  const sortedLevels = [...LEVELS].sort((a, b) => values[b] - values[a]);
-  const maxValue = Math.max(...sortedLevels.map((level) => values[level]), 0);
-  for (const level of sortedLevels) {
+  const legendLevels = ["High", "Medium", "Low", "No"];
+  const maxValue = Math.max(...legendLevels.map((level) => values[level]), 0);
+  for (const level of legendLevels) {
     const value = values[level];
     const widthPercent = maxValue > 0 ? (value / maxValue) * 100 : 0;
     const li = document.createElement("li");

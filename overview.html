@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>European Dietary Patterns - Overview</title>
+    <title>European Dietary Behavior</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
@@ -15,7 +15,8 @@
       <div id="countryUnderlay" class="country-underlay" aria-hidden="true"></div>
 
       <aside class="panel">
-        <h1 class="title">European Dietary Patterns</h1>
+        <h1 class="title">European Dietary Behavior</h1>
+        <div id="mobileTopNavSlot" class="mobile-top-nav-slot" aria-hidden="true"></div>
 
         <div class="country-select-wrap">
           <label class="sr-only" for="countrySelectButton">Country</label>
@@ -52,28 +53,30 @@
       </aside>
 
       <section class="stage">
-        <header class="top-nav">
+        <div id="desktopTopNavSlot" class="desktop-top-nav-slot">
+          <header id="topNav" class="top-nav">
           <a id="overviewNavLink" class="top-nav-link active" href="./overview.html">Overview</a>
           <a id="countryNavLink" class="top-nav-link" href="./country.html">Country</a>
-        </header>
+          </header>
+        </div>
 
         <section id="map" class="map-wrap">
           <div class="map-color-legend" aria-label="Map color legend">
             <div class="map-legend-item">
-              <span class="map-legend-dot" style="background: #B91928;"></span>
-              <span>No</span>
-            </div>
-            <div class="map-legend-item">
-              <span class="map-legend-dot" style="background: #F39600;"></span>
-              <span>Low</span>
+              <span class="map-legend-dot" style="background: #689C65;"></span>
+              <span>High</span>
             </div>
             <div class="map-legend-item">
               <span class="map-legend-dot" style="background: #F2CF00;"></span>
               <span>Medium</span>
             </div>
             <div class="map-legend-item">
-              <span class="map-legend-dot" style="background: #689C65;"></span>
-              <span>High</span>
+              <span class="map-legend-dot" style="background: #F39600;"></span>
+              <span>Low</span>
+            </div>
+            <div class="map-legend-item">
+              <span class="map-legend-dot" style="background: #B91928;"></span>
+              <span>No</span>
             </div>
           </div>
           <p class="loading">Loading map...</p>
