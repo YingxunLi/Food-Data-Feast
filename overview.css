@@ -783,7 +783,7 @@ body {
   .chart-wrap {
     align-content: start;
     justify-items: center;
-    row-gap: 14px;
+    row-gap: 20px;
   }
 
   .donut-chart,
@@ -816,7 +816,7 @@ body {
   }
 
   .explore-btn {
-    margin-top: 4px;
+    margin-top: 12px;
     align-self: start;
   }
 
