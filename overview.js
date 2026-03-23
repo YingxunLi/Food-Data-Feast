@@ -90,6 +90,8 @@ const state = {
   selectedCountry: initialCountry,
   selectedFood: initialFood,
   viewMode: initialViewMode,
+  countrySortMode: "frequency",
+  countrySectorLayout: new Map(),
   svg: null,
 };
 
@@ -117,6 +119,9 @@ const panelEl = document.querySelector(".panel");
 const countryUnderlayEl = document.querySelector("#countryUnderlay");
 const countryModeContentEl = document.querySelector("#countryModeContent");
 const countryChartEl = document.querySelector("#countryChart");
+const countrySortToggleEl = document.querySelector("#countrySortToggle");
+const sortModeFrequencyEl = document.querySelector("#sortModeFrequency");
+const sortModeRecommendationEl = document.querySelector("#sortModeRecommendation");
 
 init();
 
@@ -127,6 +132,7 @@ function init() {
   loadSvgAndRenderMap();
   syncCountryUnderlayWidth();
   applyViewModeState();
+  syncCountrySortToggle();
 
   exploreButtonEl.addEventListener("click", () => {
     if (state.viewMode === "country") {
@@ -165,6 +171,15 @@ function init() {
   countrySelectEl.addEventListener("change", () => {
     setSelectedCountry(countrySelectEl.value);
   });
+
+  if (sortModeFrequencyEl && sortModeRecommendationEl) {
+    sortModeFrequencyEl.addEventListener("click", () => {
+      setCountrySortMode("frequency");
+    });
+    sortModeRecommendationEl.addEventListener("click", () => {
+      setCountrySortMode("recommendation");
+    });
+  }
 
   window.addEventListener("resize", debounce(() => {
     syncCountryUnderlayWidth();
@@ -220,6 +235,9 @@ function closeCountryDropdown() {
 }
 
 function setSelectedCountry(code) {
+  if (state.selectedCountry !== code) {
+    state.countrySectorLayout = new Map();
+  }
   state.selectedCountry = code;
   countrySelectEl.value = code;
   countrySelectButtonEl.textContent = displayCountry(code);
@@ -477,6 +495,7 @@ function setViewMode(mode) {
 
   state.viewMode = mode;
   applyViewModeState();
+  syncCountrySortToggle();
   updateExploreCta();
   renderMap();
 
@@ -490,6 +509,34 @@ function setViewMode(mode) {
 
   syncNavigationState();
   syncOverviewQuery();
+}
+
+function setCountrySortMode(mode) {
+  if (mode !== "frequency" && mode !== "recommendation") {
+    return;
+  }
+  if (state.countrySortMode === mode) {
+    return;
+  }
+
+  state.countrySortMode = mode;
+  syncCountrySortToggle();
+  if (state.viewMode === "country") {
+    renderCountryMode();
+  }
+}
+
+function syncCountrySortToggle() {
+  if (!countrySortToggleEl || !sortModeFrequencyEl || !sortModeRecommendationEl) {
+    return;
+  }
+
+  const isCountryMode = state.viewMode === "country";
+  countrySortToggleEl.setAttribute("aria-hidden", isCountryMode ? "false" : "true");
+
+  const isFrequency = state.countrySortMode === "frequency";
+  sortModeFrequencyEl.classList.toggle("is-active", isFrequency);
+  sortModeRecommendationEl.classList.toggle("is-active", !isFrequency);
 }
 
 function applyViewModeState() {
@@ -589,6 +636,7 @@ function drawCountryChart(countryEntry, countryFoods) {
   const height = 1000;
   const centerX = width / 2;
   const centerY = height / 2;
+  const transition = d3.transition().duration(420).ease(d3.easeCubicInOut);
 
   const svg = d3.select(countryChartEl);
   svg.selectAll("*").remove();
@@ -622,6 +670,8 @@ function drawCountryChart(countryEntry, countryFoods) {
     .append("g")
     .attr("class", "country-value-labels")
     .attr("pointer-events", "none");
+
+  const nextLayout = new Map();
 
   const setCenterFoodLabel = (food) => {
     const raw = (food || "").trim();
@@ -753,11 +803,40 @@ function drawCountryChart(countryEntry, countryFoods) {
     hoverValueLabelsGroup.raise();
   };
 
-  COUNTRY_QUADRANTS.forEach(({ level, color }, index) => {
+  const allEntries = [];
+  for (const level of COUNTRY_LEVEL_ORDER) {
+    for (const food of countryFoods) {
+      const hit = countryEntry.items.find((datum) => datum.food.trim() === food && datum.level === level);
+      const value = hit ? hit.value : 0;
+      allEntries.push({
+        food,
+        level,
+        value,
+        rank: getCountryPerformanceRank(food, level),
+        baseIndex: allEntries.length,
+      });
+    }
+  }
+
+  const sectors = state.countrySortMode === "recommendation"
+    ? [0, 1, 2, 3].map((rank) => ({
+      id: `recommendation-${rank}`,
+      entries: allEntries
+        .filter((entry) => entry.rank === rank)
+        .sort((a, b) => a.baseIndex - b.baseIndex),
+    }))
+    : COUNTRY_LEVEL_ORDER.map((level) => ({
+      id: `frequency-${level}`,
+      entries: allEntries
+        .filter((entry) => entry.level === level)
+        .sort((a, b) => a.baseIndex - b.baseIndex),
+    }));
+
+  sectors.forEach((sector, index) => {
     const sectorStart = -Math.PI / 2 + (index * Math.PI) / 2 + sectorGap;
     const sectorEnd = -Math.PI / 2 + ((index + 1) * Math.PI) / 2 - sectorGap;
 
-    const sectorGroup = mainGroup.append("g").attr("class", "country-sector").attr("data-level", level);
+    const sectorGroup = mainGroup.append("g").attr("class", "country-sector").attr("data-sector", sector.id);
 
     const lineUsableStart = sectorStart + lineGap;
     const lineUsableEnd = sectorEnd - lineGap;
@@ -765,45 +844,64 @@ function drawCountryChart(countryEntry, countryFoods) {
     const bgUsableStart = sectorStart;
     const bgUsableEnd = sectorEnd;
     const bgUsableSpan = Math.max(0.001, bgUsableEnd - bgUsableStart);
-    const foodCount = Math.max(1, countryFoods.length);
+    const entries = sector.entries;
+    const entryCount = Math.max(1, entries.length);
 
-    countryFoods.forEach((food, foodIndex) => {
-      const item = countryEntry.items.find((datum) => datum.food.trim() === food && datum.level === level);
-      const value = item ? item.value : 0;
+    entries.forEach((entry, entryIndex) => {
+      const { food, level, value } = entry;
 
-      const blockStart = bgUsableStart + (foodIndex / foodCount) * bgUsableSpan;
-      const blockEnd = bgUsableStart + ((foodIndex + 1) / foodCount) * bgUsableSpan;
-      const t = foodCount > 1 ? foodIndex / (foodCount - 1) : 0.5;
+      const blockStart = bgUsableStart + (entryIndex / entryCount) * bgUsableSpan;
+      const blockEnd = bgUsableStart + ((entryIndex + 1) / entryCount) * bgUsableSpan;
+      const t = entryCount > 1 ? entryIndex / (entryCount - 1) : 0.5;
       const angle = lineUsableStart + t * lineUsableSpan;
 
+      const layoutKey = `${level}::${food}`;
+      const prevLayout = state.countrySectorLayout.get(layoutKey) || {
+        blockStart,
+        blockEnd,
+        angle,
+      };
+      nextLayout.set(layoutKey, { blockStart, blockEnd, angle });
+
       const bgArc = d3
+        .arc()
+        .innerRadius(innerRadius)
+        .outerRadius(outerRadius)
+        .startAngle(prevLayout.blockStart)
+        .endAngle(prevLayout.blockEnd);
+
+      const bgArcTarget = d3
         .arc()
         .innerRadius(innerRadius)
         .outerRadius(outerRadius)
         .startAngle(blockStart)
         .endAngle(blockEnd);
 
-      sectorGroup
+      const bgPath = sectorGroup
         .append("path")
         .attr("class", "country-sector-bg")
         .attr("d", bgArc())
         .style("fill", getCountrySectorFill(food, level))
         .attr("pointer-events", "none");
 
+      bgPath.transition(transition).attr("d", bgArcTarget());
+
       const safeRatio = dataMax === dataMin ? 1 : (value - dataMin) / (dataMax - dataMin);
       const lineLength = Math.max(0, safeRatio) * (maxLineLength - minLineLength) + minLineLength;
 
+      const [x1Prev, y1Prev] = d3.pointRadial(prevLayout.angle, innerRadius);
+      const [x2Prev, y2Prev] = d3.pointRadial(prevLayout.angle, innerRadius + lineLength);
       const [x1, y1] = d3.pointRadial(angle, innerRadius);
       const [x2, y2] = d3.pointRadial(angle, innerRadius + lineLength);
 
       const lineGroup = sectorGroup.append("g").attr("class", "food-line-group").attr("data-food", food);
 
-      lineGroup
+      const hitLine = lineGroup
         .append("line")
-        .attr("x1", x1)
-        .attr("y1", y1)
-        .attr("x2", x2)
-        .attr("y2", y2)
+        .attr("x1", x1Prev)
+        .attr("y1", y1Prev)
+        .attr("x2", x2Prev)
+        .attr("y2", y2Prev)
         .attr("stroke", "transparent")
         .attr("stroke-width", 14)
         .attr("pointer-events", "stroke")
@@ -824,22 +922,38 @@ function drawCountryChart(countryEntry, countryFoods) {
           setFoodHoverState(null);
         });
 
-      lineGroup
-        .append("line")
-        .attr("class", "food-line")
-        .attr("data-food", food)
+      hitLine
+        .transition(transition)
         .attr("x1", x1)
         .attr("y1", y1)
         .attr("x2", x2)
-        .attr("y2", y2)
+        .attr("y2", y2);
+
+      const valueLine = lineGroup
+        .append("line")
+        .attr("class", "food-line")
+        .attr("data-food", food)
+        .attr("x1", x1Prev)
+        .attr("y1", y1Prev)
+        .attr("x2", x2Prev)
+        .attr("y2", y2Prev)
         .attr("data-value", value)
         .attr("stroke-width", 4)
-        .style("stroke", color)
+        .style("stroke", LEVEL_COLORS[level])
         .attr("stroke-linecap", "round")
         .attr("opacity", 0.72)
         .attr("pointer-events", "none");
+
+      valueLine
+        .transition(transition)
+        .attr("x1", x1)
+        .attr("y1", y1)
+        .attr("x2", x2)
+        .attr("y2", y2);
     });
   });
+
+  state.countrySectorLayout = nextLayout;
 
   centerCircle.lower();
   centerFoodLabel.raise();
@@ -1012,10 +1126,14 @@ function hexToRgb(hex) {
 }
 
 function getCountrySectorFill(food, level) {
-  const guideline = FOOD_GUIDELINE_GROUP[(food || "").trim()] || "balance";
-  const levelRank = LEVEL_RANK_BY_GUIDELINE[guideline]?.[level] ?? 3;
+  const levelRank = getCountryPerformanceRank(food, level);
   const color = COUNTRY_BG_PERFORMANCE_COLORS[levelRank] || COUNTRY_BG_PERFORMANCE_COLORS[3];
   return hexToRgba(color, 0.08);
+}
+
+function getCountryPerformanceRank(food, level) {
+  const guideline = FOOD_GUIDELINE_GROUP[(food || "").trim()] || "balance";
+  return LEVEL_RANK_BY_GUIDELINE[guideline]?.[level] ?? 3;
 }
 
 function getFoods(countryList) {

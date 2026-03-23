@@ -358,6 +358,43 @@ body {
   cursor: pointer;
 }
 
+.country-sort-toggle {
+  display: none;
+  width: 188px;
+  height: 28px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: #eee9e2;
+  padding: 2px;
+  gap: 2px;
+}
+
+.layout.is-country-expanded .country-sort-toggle {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+}
+
+.country-sort-btn {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  color: #7a746d;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-transform: lowercase;
+  cursor: pointer;
+}
+
+.country-sort-btn.is-active {
+  background: #f7f5f2;
+  color: #45423d;
+}
+
 .arrow {
   font-size: 1.6em;
   line-height: 1;
