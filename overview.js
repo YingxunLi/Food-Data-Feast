@@ -45,6 +45,39 @@ const COUNTRY_META = {
   UK: { name: "United Kingdom" },
 };
 
+const FOOD_GUIDELINE_GROUP = {
+  "Whole grains": "encourage",
+  Vegetables: "encourage",
+  Fruits: "encourage",
+  "Fish and shellfish": "encourage",
+  Legumes: "encourage",
+  Nuts: "encourage",
+  "All plant oils and plant margarines": "encourage",
+  "Tubers or Starches": "balance",
+  "Dairy Food": "balance",
+  "Beef, lamb, goat, pork, and red meat in its processed form": "balance",
+  "Chicken and other poultry": "balance",
+  Eggs: "balance",
+  "Animal fats and other saturated fats": "limit",
+  "Added sugars": "limit",
+};
+
+const FOOD_GUIDELINE_ORDER = ["encourage", "balance", "limit"];
+const FOOD_GUIDELINE_LABEL = {
+  encourage: "To encourage",
+  balance: "To balance",
+  limit: "To limit",
+};
+
+const FOOD_DISPLAY_NAMES = {
+  "All plant oils and plant margarines": "Oils",
+  "Animal fats and other saturated fats": "Fats",
+  "Beef, lamb, goat, pork, and red meat in its processed form": "Red meats",
+  "Chicken and other poultry": "Poultry",
+  "Fish and shellfish": "Fish",
+  "Tubers or Starches": "Tubers",
+};
+
 const countries = cases.filter((c) => c.country !== "Total");
 const foods = getFoods(countries);
 const urlParams = new URLSearchParams(window.location.search);
@@ -238,36 +271,62 @@ function setSelectedCountry(code) {
 function renderFoodPicker() {
   foodPickerEl.innerHTML = "";
 
+  const groupedFoods = new Map(FOOD_GUIDELINE_ORDER.map((group) => [group, []]));
   for (const food of foods) {
-    const id = `food-${slug(food)}`;
-    const label = document.createElement("label");
-    label.className = "food-option";
-    label.setAttribute("for", id);
+    const group = FOOD_GUIDELINE_GROUP[food] || "balance";
+    groupedFoods.get(group).push(food);
+  }
 
-    const input = document.createElement("input");
-    input.id = id;
-    input.type = "radio";
-    input.name = "food-choice";
-    input.value = food;
-    input.checked = food === state.selectedFood;
+  for (const group of FOOD_GUIDELINE_ORDER) {
+    const foodsInGroup = groupedFoods.get(group) || [];
+    if (!foodsInGroup.length) {
+      continue;
+    }
 
-    const box = document.createElement("span");
-    box.className = "food-box";
+    const row = document.createElement("div");
+    row.className = "food-group-row";
 
-    const text = document.createElement("span");
-    text.textContent = food;
+    const title = document.createElement("span");
+    title.className = "food-group-title";
+    title.textContent = FOOD_GUIDELINE_LABEL[group] || group;
 
-    input.addEventListener("change", () => {
-      state.selectedFood = food;
-      renderLeftPanel();
-      renderMap();
-      if (state.viewMode === "country") {
-        renderCountryMode();
-      }
-    });
+    const options = document.createElement("div");
+    options.className = "food-group-options";
 
-    label.append(input, box, text);
-    foodPickerEl.appendChild(label);
+    for (const food of foodsInGroup) {
+      const id = `food-${slug(food)}`;
+      const label = document.createElement("label");
+      label.className = "food-option";
+      label.setAttribute("for", id);
+
+      const input = document.createElement("input");
+      input.id = id;
+      input.type = "radio";
+      input.name = "food-choice";
+      input.value = food;
+      input.checked = food === state.selectedFood;
+
+      const box = document.createElement("span");
+      box.className = "food-box";
+
+      const text = document.createElement("span");
+      text.textContent = displayFoodName(food);
+
+      input.addEventListener("change", () => {
+        state.selectedFood = food;
+        renderLeftPanel();
+        renderMap();
+        if (state.viewMode === "country") {
+          renderCountryMode();
+        }
+      });
+
+      label.append(input, box, text);
+      options.appendChild(label);
+    }
+
+    row.append(title, options);
+    foodPickerEl.appendChild(row);
   }
 }
 
@@ -364,7 +423,7 @@ function renderMap() {
       tooltipEl.style.top = `${event.clientY + 12}px`;
       tooltipEl.innerHTML = [
         `<strong class="tooltip-country-title">${displayCountry(code)}</strong>`,
-        `Food: ${state.selectedFood}`,
+        `Food: ${displayFoodName(state.selectedFood)}`,
         `<strong>Dominant: ${data.dominant.level} (${data.dominant.value.toFixed(1)}%)</strong>`,
         `No: ${data.values.No.toFixed(1)}%`,
         `Low: ${data.values.Low.toFixed(1)}%`,
@@ -394,10 +453,10 @@ function renderLeftPanel() {
   const values = getFoodLevelValues(entry, state.selectedFood);
   const dominant = findDominant(values);
 
-  summaryTextEl.textContent = `${dominant.value.toFixed(1)}% of people consume ${state.selectedFood.toLowerCase()} at a frequency that meets the \"${dominant.level.toLowerCase()}\" standard.`;
+  summaryTextEl.textContent = `${dominant.value.toFixed(1)}% of people consume ${displayFoodName(state.selectedFood).toLowerCase()} at a frequency that meets the \"${dominant.level.toLowerCase()}\" standard.`;
 
   donutChartEl.style.background = `conic-gradient(${buildDonutGradient(values)})`;
-  donutChartEl.innerHTML = `<div class="donut-center">${state.selectedFood}</div>`;
+  donutChartEl.innerHTML = `<div class="donut-center">${displayFoodName(state.selectedFood)}</div>`;
 
   donutLegendEl.innerHTML = "";
   const legendLevels = ["High", "Medium", "Low", "No"];
@@ -619,7 +678,7 @@ function drawCountryChart(countryEntry, countryFoods) {
     .attr("pointer-events", "none");
 
   const setCenterFoodLabel = (food) => {
-    const raw = (food || "").trim();
+    const raw = displayFoodName(food || "").trim();
     const maxCharsPerLine = Math.max(8, Math.floor((innerRadius * 1.7) / 7));
     const words = raw.split(/\s+/).filter(Boolean);
     const lines = [];
@@ -834,7 +893,7 @@ function updateCountrySummary(countryEntry, food) {
     { level: COUNTRY_LEVEL_ORDER[0], value: valuesByLevel[COUNTRY_LEVEL_ORDER[0]] || 0 },
   );
 
-  summaryTextEl.textContent = `${dominant.value.toFixed(1)}% of people consume ${food.toLowerCase()} at a frequency that meets the \"${dominant.level.toLowerCase()}\" standard.`;
+  summaryTextEl.textContent = `${dominant.value.toFixed(1)}% of people consume ${displayFoodName(food).toLowerCase()} at a frequency that meets the \"${dominant.level.toLowerCase()}\" standard.`;
 }
 
 function syncFoodPickerSelection() {
@@ -1008,6 +1067,11 @@ function displayCountry(code) {
     return "Total";
   }
   return COUNTRY_META[code]?.name || code;
+}
+
+function displayFoodName(food) {
+  const raw = (food || "").trim();
+  return FOOD_DISPLAY_NAMES[raw] || raw;
 }
 
 function slug(text) {
