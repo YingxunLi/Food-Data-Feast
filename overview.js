@@ -95,6 +95,23 @@ const FOOD_RECOMMENDED_RANGE = {
   "Added sugars": "31 g/day",
 };
 
+const SCORING_GUIDE_ROWS = [
+  { food: "Whole grains", scores: [0, 1, 1, 2, 2, 3, 3] },
+  { food: "Vegetables", scores: [0, 1, 1, 1, 2, 2, 3] },
+  { food: "Fruits", scores: [0, 1, 1, 1, 2, 2, 3] },
+  { food: "Fish and shellfish", scores: [0, 1, 2, 3, 3, 3, 3] },
+  { food: "Legumes", scores: [0, 1, 2, 2, 3, 3, 3] },
+  { food: "Nuts", scores: [0, 1, 2, 2, 3, 3, 3] },
+  { food: "All plant oils and plant margarines", scores: [0, 1, 1, 1, 2, 3, 3] },
+  { food: "Tubers or Starches", scores: [3, 3, 3, 2, 1, 0, 0] },
+  { food: "Dairy Food", scores: [3, 3, 3, 2, 1, 1, 0] },
+  { food: "Beef, lamb, goat, pork, and red meat in its processed form", scores: [3, 3, 2, 2, 1, 0, 0] },
+  { food: "Chicken and other poultry", scores: [3, 3, 3, 2, 1, 0, 0] },
+  { food: "Eggs", scores: [3, 3, 3, 2, 1, 0, 0] },
+  { food: "Animal fats and other saturated fats", scores: [3, 2, 2, 1, 1, 0, 0] },
+  { food: "Added sugars", scores: [3, 2, 2, 1, 1, 0, 0] },
+];
+
 const countries = cases.filter((c) => c.country !== "Total");
 const foods = getFoods(countries);
 const urlParams = new URLSearchParams(window.location.search);
@@ -110,7 +127,16 @@ const initialFood = (() => {
   return food && foods.includes(food) ? food : foods[0];
 })();
 
-const initialViewMode = urlParams.get("view") === "country" ? "country" : "overview";
+const initialViewMode = (() => {
+  const view = urlParams.get("view");
+  if (view === "country") {
+    return "country";
+  }
+  if (view === "guide") {
+    return "guide";
+  }
+  return "overview";
+})();
 
 const state = {
   selectedCountry: initialCountry,
@@ -135,8 +161,11 @@ const exploreButtonEl = document.querySelector("#exploreButton");
 const exploreArrowEl = exploreButtonEl?.querySelector(".arrow");
 const overviewNavLinkEl = document.querySelector("#overviewNavLink");
 const countryNavLinkEl = document.querySelector("#countryNavLink");
+const guideNavLinkEl = document.querySelector("#guideNavLink");
 const foodPickerEl = document.querySelector("#foodPicker");
 const mapEl = document.querySelector("#map");
+const scoringGuideEl = document.querySelector("#scoringGuide");
+const scoringGuideBodyEl = document.querySelector("#scoringGuideBody");
 const tooltipEl = document.querySelector("#tooltip");
 const layoutEl = document.querySelector(".layout");
 const panelEl = document.querySelector(".panel");
@@ -152,6 +181,7 @@ init();
 function init() {
   renderCountrySelect();
   renderFoodPicker();
+  renderScoringGuide();
   renderLeftPanel();
   loadSvgAndRenderMap();
   syncCountryUnderlayWidth();
@@ -169,6 +199,11 @@ function init() {
   countryNavLinkEl.addEventListener("click", (event) => {
     event.preventDefault();
     setViewMode("country");
+  });
+
+  guideNavLinkEl.addEventListener("click", (event) => {
+    event.preventDefault();
+    setViewMode("guide");
   });
 
   overviewNavLinkEl.addEventListener("click", (event) => {
@@ -347,6 +382,50 @@ function renderFoodPicker() {
   }
 }
 
+function renderScoringGuide() {
+  if (!scoringGuideBodyEl) {
+    return;
+  }
+
+  scoringGuideBodyEl.innerHTML = "";
+
+  for (const row of SCORING_GUIDE_ROWS) {
+    const tr = document.createElement("tr");
+    tr.className = "scoring-guide-row";
+    tr.classList.toggle("is-selected", row.food === state.selectedFood);
+    const groupKey = FOOD_GUIDELINE_GROUP[row.food] || "balance";
+
+    tr.addEventListener("click", () => {
+      state.selectedFood = row.food;
+      syncFoodPickerSelection();
+      renderLeftPanel();
+      renderMap();
+      if (state.viewMode === "country") {
+        renderCountryMode();
+      }
+    });
+
+    const foodTd = document.createElement("td");
+    foodTd.className = "scoring-guide-group";
+    foodTd.textContent = displayFoodName(row.food);
+    tr.appendChild(foodTd);
+
+    const approachTd = document.createElement("td");
+    approachTd.className = `scoring-guide-approach ${groupKey}`;
+    approachTd.textContent = FOOD_GUIDELINE_LABEL[groupKey] || "To balance";
+    tr.appendChild(approachTd);
+
+    for (const score of row.scores) {
+      const scoreTd = document.createElement("td");
+      scoreTd.className = `scoring-guide-score score-${score}`;
+      scoreTd.textContent = String(score);
+      tr.appendChild(scoreTd);
+    }
+
+    scoringGuideBodyEl.appendChild(tr);
+  }
+}
+
 async function loadSvgAndRenderMap() {
   try {
     const response = await fetch("./europe.svg");
@@ -504,11 +583,20 @@ function renderLeftPanel() {
   };
 
   updateExploreCta();
+  renderScoringGuide();
 
   syncNavigationState();
 }
 
 function updateExploreCta() {
+  if (state.viewMode === "guide") {
+    exploreLabelEl.textContent = "Explore Country";
+    if (exploreArrowEl) {
+      exploreArrowEl.innerHTML = "&#8594;";
+    }
+    return;
+  }
+
   if (state.viewMode === "country") {
     exploreLabelEl.textContent = "Explore Map";
     if (exploreArrowEl) {
@@ -527,7 +615,7 @@ function updateExploreCta() {
 }
 
 function setViewMode(mode) {
-  if (mode !== "overview" && mode !== "country") {
+  if (mode !== "overview" && mode !== "country" && mode !== "guide") {
     return;
   }
 
@@ -565,11 +653,15 @@ function setViewMode(mode) {
 
 function applyViewModeState() {
   layoutEl.classList.toggle("is-country-expanded", state.viewMode === "country");
+  layoutEl.classList.toggle("is-guide", state.viewMode === "guide");
   if (countryUnderlayEl) {
     countryUnderlayEl.setAttribute("aria-hidden", state.viewMode === "country" ? "false" : "true");
   }
   if (countryModeContentEl) {
     countryModeContentEl.setAttribute("aria-hidden", state.viewMode === "country" ? "false" : "true");
+  }
+  if (scoringGuideEl) {
+    scoringGuideEl.setAttribute("aria-hidden", state.viewMode === "guide" ? "false" : "true");
   }
   tooltipEl.style.opacity = "0";
 }
@@ -584,8 +676,10 @@ function syncCountryUnderlayWidth() {
 function syncNavigationState() {
   overviewNavLinkEl.classList.toggle("active", state.viewMode === "overview");
   countryNavLinkEl.classList.toggle("active", state.viewMode === "country");
+  guideNavLinkEl.classList.toggle("active", state.viewMode === "guide");
   overviewNavLinkEl.href = buildOverviewPageUrl("overview");
   countryNavLinkEl.href = buildOverviewPageUrl("country");
+  guideNavLinkEl.href = buildOverviewPageUrl("guide");
 }
 
 function buildOverviewPageUrl(viewMode) {
@@ -594,8 +688,8 @@ function buildOverviewPageUrl(viewMode) {
     params.set("country", state.selectedCountry);
   }
   params.set("food", state.selectedFood);
-  if (viewMode === "country") {
-    params.set("view", "country");
+  if (viewMode === "country" || viewMode === "guide") {
+    params.set("view", viewMode);
   }
   const query = params.toString();
   return query ? `./overview.html?${query}` : "./overview.html";
@@ -609,8 +703,8 @@ function syncOverviewQuery() {
   if (state.selectedFood) {
     params.set("food", state.selectedFood);
   }
-  if (state.viewMode === "country") {
-    params.set("view", "country");
+  if (state.viewMode === "country" || state.viewMode === "guide") {
+    params.set("view", state.viewMode);
   }
   const query = params.toString();
   const nextUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
@@ -638,6 +732,7 @@ function renderCountryMode() {
   if (!state.selectedFood || !countryFoods.includes(state.selectedFood)) {
     state.selectedFood = countryFoods[0];
     syncFoodPickerSelection();
+    renderScoringGuide();
   }
 
   drawCountryChart(countryEntry, countryFoods);
@@ -945,6 +1040,7 @@ function syncFoodPickerSelection() {
   for (const input of inputs) {
     input.checked = input.value === state.selectedFood;
   }
+  renderScoringGuide();
 }
 
 function buildCountryDataByFood(food) {

@@ -57,6 +57,7 @@
           <header id="topNav" class="top-nav">
           <a id="overviewNavLink" class="top-nav-link active" href="./overview.html">Overview</a>
           <a id="countryNavLink" class="top-nav-link" href="./country.html">Country</a>
+          <a id="guideNavLink" class="top-nav-link" href="./overview.html?view=guide">Scoring Guide</a>
           </header>
         </div>
 
@@ -80,6 +81,29 @@
             </div>
           </div>
           <p class="loading">Loading map...</p>
+        </section>
+
+        <section id="scoringGuide" class="scoring-guide-wrap" aria-hidden="true">
+          <div class="scoring-guide-card">
+            <div class="scoring-guide-table-wrap">
+              <table class="scoring-guide-table" aria-label="Scoring guide matrix">
+                <thead>
+                  <tr>
+                    <th scope="col">Food group</th>
+                    <th scope="col">Approach used</th>
+                    <th scope="col">Never</th>
+                    <th scope="col">One to three times a month</th>
+                    <th scope="col">Once per week</th>
+                    <th scope="col">From 2 to 3 times a week</th>
+                    <th scope="col">From 4 to 6 times a week</th>
+                    <th scope="col">Daily (one time a day)</th>
+                    <th scope="col">Daily (2 or more times a day)</th>
+                  </tr>
+                </thead>
+                <tbody id="scoringGuideBody"></tbody>
+              </table>
+            </div>
+          </div>
         </section>
 
         <footer class="food-picker-wrap">

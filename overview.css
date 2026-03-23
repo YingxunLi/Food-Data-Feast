@@ -189,7 +189,7 @@ body {
 .summary {
   margin: var(--space-selector-to-summary) 0 0;
   color: #555049;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.5;
   white-space: pre-line;
 }
@@ -412,6 +412,21 @@ body {
   pointer-events: none;
 }
 
+.layout.is-guide .map-wrap,
+.layout.is-guide .food-picker-wrap {
+  display: none;
+}
+
+.layout.is-guide .stage {
+  grid-template-rows: auto 1fr;
+}
+
+.layout.is-guide .scoring-guide-wrap {
+  display: grid;
+  align-content: center;
+  min-height: 0;
+}
+
 .top-nav {
   width: min(100%, var(--content-max));
   margin-inline: auto;
@@ -440,6 +455,128 @@ body {
   margin-inline: auto;
   min-height: 0;
   position: relative;
+}
+
+.scoring-guide-wrap {
+  width: min(100%, var(--content-max));
+  margin-inline: auto;
+  min-height: 0;
+  display: none;
+}
+
+.scoring-guide-card {
+  border: 1px solid #ddd6cc;
+  border-radius: 14px;
+  background: rgba(247, 245, 242, 0.9);
+  box-shadow: 0 10px 24px rgba(69, 66, 61, 0.08);
+  padding: 14px;
+}
+
+.scoring-guide-title {
+  margin: 0 0 12px;
+  color: #5a554d;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.scoring-guide-table-wrap {
+  overflow: auto;
+  border-radius: 10px;
+}
+
+.scoring-guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+  font-size: 12px;
+  color: #4a463f;
+}
+
+.scoring-guide-table th,
+.scoring-guide-table td {
+  border: 1px solid #e2dbd1;
+  padding: 8px 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.scoring-guide-table th {
+  background: var(--accent);
+  color: #f9f4ef;
+  font-weight: 600;
+}
+
+.scoring-guide-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.scoring-guide-row {
+  cursor: pointer;
+  transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.scoring-guide-row.is-selected {
+  background: rgba(123, 14, 71, 0.04);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.scoring-guide-row:hover {
+  background: rgba(123, 14, 71, 0.03);
+}
+
+.scoring-guide-row.is-selected:hover {
+  background: rgba(123, 14, 71, 0.04);
+}
+
+.scoring-guide-approach {
+  font-weight: 500;
+  background: transparent;
+}
+
+.scoring-guide-approach.encourage {
+  background: transparent;
+}
+
+.scoring-guide-approach.balance {
+  background: transparent;
+}
+
+.scoring-guide-approach.limit {
+  background: transparent;
+}
+
+.scoring-guide-score.score-3 {
+  background: rgba(104, 156, 101, 0.5);
+}
+
+.scoring-guide-score.score-2 {
+  background: rgba(242, 207, 0, 0.5);
+}
+
+.scoring-guide-score.score-1 {
+  background: rgba(243, 150, 0, 0.5);
+}
+
+.scoring-guide-score.score-0 {
+  background: rgba(185, 25, 40, 0.5);
+}
+
+.scoring-guide-row.is-selected .scoring-guide-score.score-3 {
+  background: rgba(104, 156, 101, 1);
+}
+
+.scoring-guide-row.is-selected .scoring-guide-score.score-2 {
+  background: rgba(242, 207, 0, 1);
+}
+
+.scoring-guide-row.is-selected .scoring-guide-score.score-1 {
+  background: rgba(243, 150, 0, 1);
+}
+
+.scoring-guide-row.is-selected .scoring-guide-score.score-0 {
+  background: rgba(185, 25, 40, 1);
 }
 
 .map-color-legend {
@@ -687,6 +824,10 @@ body {
     grid-template-rows: minmax(300px, 1fr) auto;
     gap: 10px;
     padding-top: 10px;
+  }
+
+  .layout.is-guide .stage {
+    grid-template-rows: 1fr;
   }
 
   .mobile-top-nav-slot {
