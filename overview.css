@@ -783,6 +783,32 @@ body {
 }
 
 @media (max-width: 860px) {
+  .layout.is-guide .scoring-guide-wrap {
+    display: block;
+    width: 100vw;
+    min-height: 220px;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+  }
+  .scoring-guide-card {
+    box-shadow: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 0 0 12px 0;
+  }
+  .scoring-guide-table-wrap {
+    overflow-x: auto;
+    border-radius: 0;
+    margin: 0;
+    padding: 0 0 0 0;
+    width: 100vw;
+  }
+  .scoring-guide-table {
+    min-width: 640px;
+    width: 100%;
+    font-size: 12px;
+  }
   .country-underlay {
     display: none !important;
   }
@@ -890,9 +916,9 @@ body {
     gap: 4px;
   }
 
-  #guideNavLink {
+  /* #guideNavLink {
     display: none;
-  }
+  } */
 }
 
 @media (max-width: 640px) {
