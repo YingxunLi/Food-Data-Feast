@@ -1,3 +1,13 @@
+@media (max-width: 860px) {
+  .layout,
+  .stage,
+  .panel,
+  .scoring-guide-wrap,
+  .map-wrap {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+}
 :root {
   --bg: #ece9e4;
   --panel-bg: #f4f1ec;
@@ -34,6 +44,7 @@ body {
   background: var(--bg);
   height: 100vh;
   overflow: hidden;
+  overflow-x: hidden;
 }
 
 .layout {
@@ -785,7 +796,8 @@ body {
 @media (max-width: 860px) {
   .layout.is-guide .scoring-guide-wrap {
     display: block;
-    width: 100vw;
+    width: 100%;
+    max-width: 100vw;
     min-height: 220px;
     margin: 0;
     padding: 0;
@@ -802,7 +814,8 @@ body {
     border-radius: 0;
     margin: 0;
     padding: 0 0 0 0;
-    width: 100vw;
+    width: 100%;
+    max-width: 100vw;
   }
   .scoring-guide-table {
     min-width: 640px;
@@ -819,6 +832,7 @@ body {
     height: auto;
     min-height: 100vh;
     overflow: auto;
+    overflow-x: hidden;
   }
 
   .layout {
@@ -826,7 +840,7 @@ body {
     min-height: 100vh;
     grid-template-columns: 1fr;
   }
-  /* 修复移动端地图SVG高度塌陷问题 */
+  
   #mapSvgContainer, #mapSvgContainer svg {
     height: auto !important;
     min-height: 220px;

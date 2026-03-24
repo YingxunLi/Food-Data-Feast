@@ -183,9 +183,6 @@ function isMobileViewport() {
 init();
 
 function init() {
-  if (state.viewMode === "guide" && isMobileViewport()) {
-    state.viewMode = "overview";
-  }
 
   renderCountrySelect();
   renderFoodPicker();
@@ -240,9 +237,6 @@ function init() {
   });
 
   window.addEventListener("resize", debounce(() => {
-    if (state.viewMode === "guide" && isMobileViewport()) {
-      setViewMode("overview");
-    }
     syncCountryUnderlayWidth();
     syncTopNavPlacement();
   }, 120));
@@ -626,9 +620,7 @@ function updateExploreCta() {
 }
 
 function setViewMode(mode) {
-  if (mode === "guide" && isMobileViewport()) {
-    mode = "overview";
-  }
+  // 移除移动端禁止 guide 的限制
 
   if (mode !== "overview" && mode !== "country" && mode !== "guide") {
     return;
