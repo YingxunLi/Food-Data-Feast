@@ -530,11 +530,21 @@ body {
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
+.scoring-guide-row.is-selected .scoring-guide-group,
+.scoring-guide-row.is-selected .scoring-guide-approach {
+  background: rgba(123, 14, 71, 0.04);
+}
+
 .scoring-guide-row:hover {
   background: rgba(123, 14, 71, 0.03);
 }
 
 .scoring-guide-row.is-selected:hover {
+  background: rgba(123, 14, 71, 0.04);
+}
+
+.scoring-guide-row.is-selected:hover .scoring-guide-group,
+.scoring-guide-row.is-selected:hover .scoring-guide-approach {
   background: rgba(123, 14, 71, 0.04);
 }
 
