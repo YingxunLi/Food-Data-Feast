@@ -783,6 +783,12 @@ body {
 }
 
 @media (max-width: 860px) {
+  .country-underlay {
+    display: none !important;
+  }
+  .map-wrap {
+    min-height: 220px;
+  }
   body {
     height: auto;
     min-height: 100vh;
@@ -793,6 +799,13 @@ body {
     height: auto;
     min-height: 100vh;
     grid-template-columns: 1fr;
+  }
+  /* 修复移动端地图SVG高度塌陷问题 */
+  #mapSvgContainer, #mapSvgContainer svg {
+    height: auto !important;
+    min-height: 220px;
+    width: 100%;
+    display: block;
   }
 
   .panel {
