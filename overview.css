@@ -506,6 +506,14 @@ body {
   font-weight: 600;
 }
 
+.scoring-guide-table .label-full {
+  display: inline;
+}
+
+.scoring-guide-table .label-short {
+  display: none;
+}
+
 .scoring-guide-table td:first-child {
   text-align: left;
   font-weight: 500;
@@ -731,6 +739,14 @@ body {
 @media (max-width: 980px) {
   :root {
     --donut-size: min(220px, 26vh);
+  }
+
+  .scoring-guide-table .label-full {
+    display: none;
+  }
+
+  .scoring-guide-table .label-short {
+    display: inline;
   }
 
   .layout {
