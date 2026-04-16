@@ -856,14 +856,6 @@ body {
     --donut-to-legend-gap: 16px;
   }
 
-  .scoring-guide-table .label-full {
-    display: none;
-  }
-
-  .scoring-guide-table .label-short {
-    display: inline;
-  }
-
   .layout {
     grid-template-columns: 1fr;
     width: 100%;
@@ -885,6 +877,16 @@ body {
 
   .country-chart {
     width: min(100%, 100vw);
+  }
+}
+
+@media (max-width: 860px) {
+  .scoring-guide-table .label-full {
+    display: none;
+  }
+
+  .scoring-guide-table .label-short {
+    display: inline;
   }
 }
 
