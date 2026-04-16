@@ -620,8 +620,6 @@ function updateExploreCta() {
 }
 
 function setViewMode(mode) {
-  // 移除移动端禁止 guide 的限制
-
   if (mode !== "overview" && mode !== "country" && mode !== "guide") {
     return;
   }
