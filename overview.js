@@ -176,33 +176,8 @@ const topNavEl = document.querySelector("#topNav");
 const desktopTopNavSlotEl = document.querySelector("#desktopTopNavSlot");
 const mobileTopNavSlotEl = document.querySelector("#mobileTopNavSlot");
 
-const COMPACT_BREAKPOINT = 980;
-const NARROW_BREAKPOINT = 860;
-
 function isMobileViewport() {
-  return getResponsiveWidth() <= NARROW_BREAKPOINT;
-}
-
-function getResponsiveWidth() {
-  if (!layoutEl) {
-    return window.innerWidth;
-  }
-  const width = layoutEl.getBoundingClientRect().width;
-  return width > 0 ? width : window.innerWidth;
-}
-
-function syncResponsiveState() {
-  if (!layoutEl) {
-    return { isCompact: false, isNarrow: false };
-  }
-  const width = getResponsiveWidth();
-  const isCompact = width <= COMPACT_BREAKPOINT;
-  const isNarrow = width <= NARROW_BREAKPOINT;
-
-  layoutEl.classList.toggle("is-compact", isCompact);
-  layoutEl.classList.toggle("is-narrow", isNarrow);
-
-  return { isCompact, isNarrow };
+  return window.matchMedia("(max-width: 980px)").matches;
 }
 
 init();
@@ -215,7 +190,6 @@ function init() {
   renderLeftPanel();
   loadSvgAndRenderMap();
   syncCountryUnderlayWidth();
-  syncResponsiveState();
   syncTopNavPlacement();
   applyViewModeState();
 
@@ -264,7 +238,6 @@ function init() {
 
   window.addEventListener("resize", debounce(() => {
     syncCountryUnderlayWidth();
-    syncResponsiveState();
     syncTopNavPlacement();
   }, 120));
 }
@@ -274,8 +247,7 @@ function syncTopNavPlacement() {
     return;
   }
 
-  const { isNarrow } = syncResponsiveState();
-  const isMobile = isNarrow;
+  const isMobile = window.matchMedia("(max-width: 980px)").matches;
   const targetSlot = isMobile ? mobileTopNavSlotEl : desktopTopNavSlotEl;
   if (topNavEl.parentElement !== targetSlot) {
     targetSlot.appendChild(topNavEl);
