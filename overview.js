@@ -154,6 +154,7 @@ const countrySelectButtonEl = document.querySelector("#countrySelectButton");
 const countrySelectListEl = document.querySelector("#countrySelectList");
 const countrySelectEl = document.querySelector("#countrySelect");
 const summaryTextEl = document.querySelector("#summaryText");
+const summaryFooterTextEl = document.querySelector("#summaryFooterText");
 const donutChartEl = document.querySelector("#donutChart");
 const donutLegendEl = document.querySelector("#donutLegend");
 const exploreLabelEl = document.querySelector("#exploreLabel");
@@ -554,7 +555,11 @@ function renderLeftPanel() {
   const values = getFoodLevelValues(entry, state.selectedFood);
   const dominant = findDominant(values);
 
-  summaryTextEl.textContent = buildSummarySentence(state.selectedFood, dominant);
+  const summaryParts = buildSummaryParts(state.selectedFood, dominant);
+  summaryTextEl.textContent = summaryParts.mainLine;
+  if (summaryFooterTextEl) {
+    summaryFooterTextEl.textContent = summaryParts.footerText;
+  }
 
   donutChartEl.style.background = `conic-gradient(${buildDonutGradient(values)})`;
   donutChartEl.innerHTML = `<div class="donut-center">${displayFoodName(state.selectedFood)}</div>`;
@@ -748,6 +753,9 @@ function renderCountryMode() {
 
 function clearCountrySummary() {
   summaryTextEl.textContent = "";
+  if (summaryFooterTextEl) {
+    summaryFooterTextEl.textContent = "";
+  }
 }
 
 function drawCountryChart(countryEntry, countryFoods) {
@@ -1027,17 +1035,37 @@ function updateCountrySummary(countryEntry, food) {
     { level: COUNTRY_LEVEL_ORDER[0], value: valuesByLevel[COUNTRY_LEVEL_ORDER[0]] || 0 },
   );
 
-  summaryTextEl.textContent = buildSummarySentence(food, dominant);
+  const summaryParts = buildSummaryParts(food, dominant);
+  summaryTextEl.textContent = summaryParts.mainLine;
+  if (summaryFooterTextEl) {
+    summaryFooterTextEl.textContent = summaryParts.footerText;
+  }
 }
 
-function buildSummarySentence(food, dominant) {
+function buildSummaryParts(food, dominant) {
   const levelText = String(dominant?.level || "").toLowerCase();
   const foodText = displayFoodName(food).toLowerCase();
   const share = Number(dominant?.value || 0).toFixed(1);
-  const guidelineGroup = FOOD_GUIDELINE_GROUP[food] || "balance";
-  const guidelineText = (FOOD_GUIDELINE_LABEL[guidelineGroup] || "To balance").toLowerCase();
   const recommendedRange = FOOD_RECOMMENDED_RANGE[food] || "N/A";
-  return `The largest share ${share}% falls into the "${levelText}" category for ${foodText}, indicating ${levelText} adherence to the recommendations.\n\nRecommended range (${guidelineText}): ${recommendedRange}.`;
+
+  let recommendLine = "";
+  if (recommendedRange !== "N/A") {
+    const match = recommendedRange.match(/([\d.]+)\s*([a-zA-Z/]+)\/day/);
+    if (match) {
+      const amount = match[1];
+      const unit = match[2];
+      recommendLine = `Recommended - ${amount} ${unit} of ${foodText} daily.`;
+    } else {
+      recommendLine = `Recommended - ${recommendedRange} of ${foodText} daily.`;
+    }
+  } else {
+    recommendLine = `Recommended - N/A for ${foodText}.`;
+  }
+
+  return {
+    mainLine: `The largest share ${share}% falls into the "${levelText}" category for ${foodText}, indicating ${levelText} adherence to the recommendations.`,
+    footerText: `Healthy for you, good for the planet.\n${recommendLine}`,
+  };
 }
 
 function syncFoodPickerSelection() {
